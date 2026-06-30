@@ -1,100 +1,115 @@
 # Flask Base
 
-A production-oriented Flask starter app with:
+A small Flask starter for DigitalOcean App Platform.
 
-- App factory layout
-- Nested Flask blueprints
-- Bootstrap templates
-- Role-based access control with SCIM-ready provisioning endpoints
-- SAML single sign-on hooks via `python3-saml`
-- SQLite by default for local development
-- PostgreSQL-ready via SQLAlchemy and Flask-Migrate
-- Health/readiness endpoints for Kubernetes
-- Gunicorn container entrypoint
-- Kubernetes manifests for load-balanced app deployment
-
-## Local setup
+## Local Setup
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-copy .env.example .env
-flask --app wsgi db upgrade
-flask --app wsgi run
+flask --app wsgi run --debug
 ```
 
-By default the local app uses SQLite at `instance/app.db`. Set `DATABASE_URL` when you are ready to switch to PostgreSQL.
+The app will be available at `http://127.0.0.1:5000`.
 
-For a local PostgreSQL dependency, use Docker Compose:
+## Application Layout
 
-```powershell
-docker compose --profile postgres up --build
+Routes are organized with nested blueprints:
+
+| Module | URL prefix | Purpose |
+| --- | --- | --- |
+| `app.main` | `/` | Site and platform routes |
+| `app.api` | `/api` | API parent blueprint |
+| `app.api.v1` | `/api/v1` | Versioned API routes |
+
+## Environment
+
+Copy `.env.example` to `.env` for local development.
+
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `SECRET_KEY` | Flask session/security key | `dev-secret-key` |
+| `DATABASE_URL` | SQLAlchemy database URL | `sqlite:///app.db` |
+| `FLASK_DEBUG` | Enables debug config when true | `false` |
+| `LOG_LEVEL` | Python logging level | `INFO` |
+| `LOG_HEALTH_CHECKS` | Log `/health` requests when true | `false` |
+| `DEFAULT_ADMIN_EMAIL` | Seeded local admin email | `admin@admin.com` |
+| `DEFAULT_ADMIN_PASSWORD` | Seeded local admin password | `admin` |
+| `SAML_ENABLED` | Enables SAML login routes | `false` |
+| `SAML_SP_ENTITY_ID` | Service provider entity ID | `http://localhost:5000/auth/saml/metadata` |
+| `SAML_SP_ACS_URL` | SAML assertion consumer service URL | `http://localhost:5000/auth/saml/acs` |
+| `SAML_IDP_ENTITY_ID` | Identity provider entity ID | empty |
+| `SAML_IDP_SSO_URL` | Identity provider SSO URL | empty |
+| `SAML_IDP_SLO_URL` | Identity provider SLO URL | empty |
+| `SAML_IDP_X509_CERT` | Identity provider signing cert | empty |
+| `JWT_SECRET_KEY` | Secret used to sign API JWTs | `SECRET_KEY` |
+| `JWT_ALGORITHM` | JWT signing algorithm | `HS256` |
+| `JWT_ACCESS_TOKEN_EXPIRES_MINUTES` | Access token lifetime in minutes | `60` |
+
+## Database Progression
+
+The app is set up to support the path you described:
+
+1. `sqlite:///app.db` for local development by default
+2. A development PostgreSQL instance by setting `DATABASE_URL`
+3. A production PostgreSQL instance by setting `DATABASE_URL` in App Platform
+
+Examples:
+
+```env
+DATABASE_URL=sqlite:///app.db
+DATABASE_URL=postgresql://postgres:password@localhost:5432/flask_base_dev
+DATABASE_URL=postgres://user:password@db.example.com:25060/defaultdb
 ```
 
-## Required configuration
+If you use a `postgres://...` URL, the app normalizes it to `postgresql://...` automatically for SQLAlchemy.
 
-The app reads configuration from environment variables:
+## DigitalOcean App Platform
 
-| Variable | Purpose |
-| --- | --- |
-| `SECRET_KEY` | Flask session signing key |
-| `DATABASE_URL` | Optional database connection string; defaults to local SQLite when unset |
-| `SCIM_BEARER_TOKEN` | Bearer token required for `/scim/v2` provisioning endpoints |
-| `SERVER_NAME` | Public host used by SAML URLs |
-| `TRUST_PROXY_HEADERS` | Set to `true` behind an Ingress/load balancer |
-| `SAML_SP_ENTITY_ID` | Service provider entity ID |
-| `SAML_SP_ACS_URL` | Assertion consumer service URL |
-| `SAML_SP_SLS_URL` | Single logout service URL |
-| `SAML_IDP_ENTITY_ID` | Identity provider entity ID |
-| `SAML_IDP_SSO_URL` | Identity provider SSO URL |
-| `SAML_IDP_SLO_URL` | Identity provider logout URL |
-| `SAML_IDP_X509_CERT` | Identity provider signing certificate |
+Use this run command:
 
-## Kubernetes
-
-Update image names, host names, and secrets in `k8s/`, then apply:
-
-```powershell
-kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/configmap.yaml
-kubectl apply -f k8s/secret.example.yaml
-kubectl apply -f k8s/postgres.yaml
-kubectl apply -f k8s/migrate-job.yaml
-kubectl apply -f k8s/deployment.yaml
-kubectl apply -f k8s/service.yaml
-kubectl apply -f k8s/ingress.yaml
+```sh
+gunicorn --worker-tmp-dir /dev/shm wsgi:app
 ```
 
-Replace `secret.example.yaml` with your platform's secret manager or sealed-secret workflow before production use.
+The `/health` route returns a JSON status response and is suitable for platform health checks. The versioned API also exposes `/api/v1/health`.
 
-## Database migrations
+App logs are written to stdout as JSON so DigitalOcean App Platform can collect them from the container log stream.
 
-Create or update the local SQLite database:
+The homepage uses Bootstrap 5 with a client-side light/dark mode toggle stored in `localStorage`.
 
-```powershell
-flask --app wsgi db upgrade
-```
+## Authentication
 
-Then register a local user at `/auth/register` and sign in at `/auth/login`.
-Local accounts are created as administrators. SCIM-provisioned users default to the `user` role unless a SCIM `roles` value of `admin` is supplied.
+The app now includes:
 
-Example SCIM user payload:
+1. Local email/password login with a seeded starter admin account
+2. SAML login routes that can be enabled with environment configuration
+3. Multi-role users through a many-to-many `User <-> Role` relationship
 
-```json
-{
-  "userName": "person@example.com",
-  "displayName": "Example Person",
-  "active": true,
-  "roles": [{ "value": "admin", "primary": true }]
-}
-```
+Starter roles:
 
-Generate future migrations after model changes:
+- `Admin`
+- `User`
 
-```powershell
-flask --app wsgi db migrate -m "initial schema"
-flask --app wsgi db upgrade
-```
+Starter admin login:
 
-In Kubernetes, run migrations as a Job or release hook before rolling out a new image.
+- Email: `admin@admin.com`
+- Password: `admin`
+
+SAML routes:
+
+- `/auth/saml/login`
+- `/auth/saml/acs`
+- `/auth/saml/metadata`
+
+When SAML is enabled, users authenticated through the IdP are created automatically if they do not already exist and are assigned the `User` role by default.
+
+## JWT API Auth
+
+The auth API now supports JWT access tokens in addition to the browser session:
+
+- `POST /api/v1/auth/login` returns a session and a JWT
+- `POST /api/v1/auth/token` returns a JWT without relying on the web login flow
+- `GET /api/v1/auth/me` accepts either the session cookie or `Authorization: Bearer <token>`
+- `GET /api/v1/auth/token/verify` validates a bearer token

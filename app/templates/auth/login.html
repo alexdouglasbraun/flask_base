@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-5 col-md-7">
+                <div class="status-panel p-4 p-md-5">
+                    <div class="mb-4">
+                        <div class="eyebrow mb-3">Authentication</div>
+                        <h1 class="h3 mb-2">Sign in to Flask Base</h1>
+                        <p class="text-body-secondary mb-0">Default local admin credentials are pre-seeded for the starter app.</p>
+                    </div>
+
+                    <form method="post" action="{{ url_for('auth.login_post') }}" class="vstack gap-3">
+                        <div>
+                            <label class="form-label" for="email">Email</label>
+                            <input class="form-control form-control-lg" id="email" name="email" type="email" value="admin@admin.com" required>
+                        </div>
+                        <div>
+                            <label class="form-label" for="password">Password</label>
+                            <input class="form-control form-control-lg" id="password" name="password" type="password" value="admin" required>
+                        </div>
+                        <button class="btn btn-primary btn-lg" type="submit">Login with Email</button>
+                    </form>
+
+                    <div class="auth-divider my-4"><span>or</span></div>
+
+                    {% if saml_enabled %}
+                    <a class="btn btn-outline-secondary btn-lg w-100" href="{{ url_for('auth.saml_login') }}">Login with SAML</a>
+                    {% else %}
+                    <button class="btn btn-outline-secondary btn-lg w-100" type="button" disabled>Login with SAML</button>
+                    <p class="small text-body-secondary mt-3 mb-0">Enable SAML by setting `SAML_ENABLED=true` and the IdP configuration values.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
