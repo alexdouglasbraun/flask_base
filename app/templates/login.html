@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Sign in{% endblock %}
+
+{% block content %}
+  <section class="row justify-content-center">
+    <div class="col-12 col-sm-10 col-md-7 col-lg-5">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4 p-md-5">
+          <h1 class="h3 mb-3">Sign in</h1>
+    {% if error %}
+          <div class="alert alert-danger" role="alert">{{ error }}</div>
+    {% endif %}
+          <form method="post" action="{{ url_for('web.auth.local_login') }}" class="vstack gap-3">
+            <div>
+              <label class="form-label" for="email">Email</label>
+              <input class="form-control" id="email" name="email" type="email" autocomplete="email" value="{{ email or '' }}" required>
+            </div>
+            <div>
+              <label class="form-label" for="password">Password</label>
+              <input class="form-control" id="password" name="password" type="password" autocomplete="current-password" required>
+            </div>
+            <button class="btn btn-primary w-100" type="submit">Log in</button>
+          </form>
+          <div class="d-flex align-items-center gap-3 my-4">
+            <hr class="flex-grow-1">
+            <span class="text-secondary small">or</span>
+            <hr class="flex-grow-1">
+          </div>
+          <a class="btn btn-outline-primary w-100" href="{{ url_for('web.auth.saml_login') }}">Continue with SAML</a>
+          <p class="text-secondary small mt-3 mb-0">
+            Need a local account?
+            <a href="{{ url_for('web.auth.register') }}">Register</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

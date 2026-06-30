@@ -1,0 +1,18 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: flask-base-migrate
+  namespace: flask-base
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: migrate
+          image: ghcr.io/your-org/flask-base:latest
+          command: ["flask", "--app", "wsgi", "db", "upgrade"]
+          envFrom:
+            - configMapRef:
+                name: flask-base-config
+            - secretRef:
+                name: flask-base-secret

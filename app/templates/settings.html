@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+  <section class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="row g-0">
+        <div class="col-12 col-md-3 border-end">
+          <div class="nav flex-md-column nav-pills p-3 gap-1" id="settings-tabs" role="tablist" aria-orientation="vertical">
+            <button class="nav-link active text-md-start" id="account-tab" data-bs-toggle="pill" data-bs-target="#account-panel" type="button" role="tab" aria-controls="account-panel" aria-selected="true">Account</button>
+            {% if current_user.is_admin %}
+              <button class="nav-link text-md-start" id="saml-tab" data-bs-toggle="pill" data-bs-target="#saml-panel" type="button" role="tab" aria-controls="saml-panel" aria-selected="false">SAML Setup</button>
+              <button class="nav-link text-md-start" id="scim-tab" data-bs-toggle="pill" data-bs-target="#scim-panel" type="button" role="tab" aria-controls="scim-panel" aria-selected="false">SCIM Setup</button>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="col-12 col-md-9">
+          <div class="tab-content p-4">
+            <div class="tab-pane fade show active" id="account-panel" role="tabpanel" aria-labelledby="account-tab" tabindex="0">
+              <h1 class="h3 mb-2">Settings</h1>
+              <p class="text-secondary mb-0">Account settings for {{ user.display_name or user.email or user.saml_name_id }}.</p>
+              <dl class="row mt-4 mb-0">
+                <dt class="col-sm-3">Role</dt>
+                <dd class="col-sm-9">
+                  {% for role in user.role_names %}
+                    <span class="badge text-bg-secondary text-capitalize">{{ role }}</span>
+                  {% else %}
+                    <span class="text-secondary">No roles assigned</span>
+                  {% endfor %}
+                </dd>
+                <dt class="col-sm-3">Status</dt>
+                <dd class="col-sm-9">{{ "Active" if user.active else "Inactive" }}</dd>
+              </dl>
+            </div>
+
+            {% if current_user.is_admin %}
+              <div class="tab-pane fade" id="saml-panel" role="tabpanel" aria-labelledby="saml-tab" tabindex="0">
+                <h2 class="h4 mb-3">SAML Setup</h2>
+                <p class="text-secondary">Use these service provider values when configuring Microsoft Entra ID or another SAML identity provider.</p>
+                <dl class="row setup-list">
+                  <dt class="col-lg-4">SP Entity ID</dt>
+                  <dd class="col-lg-8"><code>{{ saml_setup.sp_entity_id }}</code></dd>
+                  <dt class="col-lg-4">Metadata URL</dt>
+                  <dd class="col-lg-8"><code>{{ saml_setup.metadata_url }}</code></dd>
+                  <dt class="col-lg-4">Sign on URL</dt>
+                  <dd class="col-lg-8"><code>{{ saml_setup.login_url }}</code></dd>
+                  <dt class="col-lg-4">Reply URL / ACS URL</dt>
+                  <dd class="col-lg-8"><code>{{ saml_setup.acs_url }}</code></dd>
+                  <dt class="col-lg-4">Logout URL / SLS URL</dt>
+                  <dd class="col-lg-8"><code>{{ saml_setup.sls_url }}</code></dd>
+                </dl>
+
+                <h3 class="h5 mt-4 mb-3">Identity Provider</h3>
+                <dl class="row setup-list mb-0">
+                  <dt class="col-lg-4">IdP Entity ID</dt>
+                  <dd class="col-lg-8"><code>{{ saml_setup.idp_entity_id or "Not configured" }}</code></dd>
+                  <dt class="col-lg-4">IdP SSO URL</dt>
+                  <dd class="col-lg-8"><code>{{ saml_setup.idp_sso_url or "Not configured" }}</code></dd>
+                  <dt class="col-lg-4">IdP SLO URL</dt>
+                  <dd class="col-lg-8"><code>{{ saml_setup.idp_slo_url or "Not configured" }}</code></dd>
+                  <dt class="col-lg-4">Signing certificate</dt>
+                  <dd class="col-lg-8">
+                    {% if saml_setup.idp_cert_configured %}
+                      <span class="badge text-bg-success">Configured</span>
+                    {% else %}
+                      <span class="badge text-bg-warning">Not configured</span>
+                    {% endif %}
+                  </dd>
+                </dl>
+              </div>
+
+              <div class="tab-pane fade" id="scim-panel" role="tabpanel" aria-labelledby="scim-tab" tabindex="0">
+                <h2 class="h4 mb-3">SCIM Setup</h2>
+                <p class="text-secondary">Use these values for user provisioning and role sync. Provisioned users default to <code>user</code> unless SCIM sends a role value of <code>admin</code>.</p>
+                <dl class="row setup-list">
+                  <dt class="col-lg-4">Tenant URL</dt>
+                  <dd class="col-lg-8"><code>{{ scim_setup.tenant_url }}</code></dd>
+                  <dt class="col-lg-4">Users endpoint</dt>
+                  <dd class="col-lg-8"><code>{{ scim_setup.users_url }}</code></dd>
+                  <dt class="col-lg-4">Service provider config</dt>
+                  <dd class="col-lg-8"><code>{{ scim_setup.service_provider_config_url }}</code></dd>
+                  <dt class="col-lg-4">Secret token</dt>
+                  <dd class="col-lg-8">
+                    {% if scim_setup.bearer_token_configured %}
+                      <span class="badge text-bg-success">Configured</span>
+                    {% else %}
+                      <span class="badge text-bg-warning">Not configured</span>
+                    {% endif %}
+                  </dd>
+                </dl>
+
+                <h3 class="h5 mt-4 mb-3">Role Payload</h3>
+                <pre class="bg-body-tertiary border rounded p-3 mb-0"><code>{
+  "roles": [
+    { "value": "admin", "primary": true }
+  ]
+}</code></pre>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
