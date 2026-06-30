@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Flask Base{% endblock %}
+
+{% block content %}
+<section class="hero-section py-5 py-lg-6">
+    <div class="container">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <div class="eyebrow mb-3">Bootstrap homepage</div>
+                <h1 class="display-4 fw-semibold mb-3">A clean Flask base with local auth, SAML support, and deploy-ready defaults.</h1>
+                <p class="lead text-body-secondary mb-4">
+                    Start with nested blueprints, structured logging, SQLAlchemy wiring, Bootstrap views, and a flexible authentication foundation.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    {% if current_user.is_authenticated %}
+                    <a class="btn btn-primary btn-lg" href="{{ url_for('api.v1.index') }}">View API v1</a>
+                    <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('auth.logout') }}">Logout</a>
+                    {% else %}
+                    <a class="btn btn-primary btn-lg" href="{{ url_for('auth.login') }}">Login</a>
+                    <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('api.v1.index') }}">View API v1</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="status-panel p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="h5 mb-0">Access Snapshot</h2>
+                        <span class="badge text-bg-success">Healthy</span>
+                    </div>
+                    <div class="status-list">
+                        <div class="status-row">
+                            <span class="text-body-secondary">User</span>
+                            <code>{{ current_user.email if current_user.is_authenticated else "Guest" }}</code>
+                        </div>
+                        <div class="status-row">
+                            <span class="text-body-secondary">Roles</span>
+                            <code>{% if current_user.is_authenticated %}{{ current_user.roles | map(attribute="name") | join(", ") }}{% else %}n/a{% endif %}</code>
+                        </div>
+                        <div class="status-row">
+                            <span class="text-body-secondary">Auth methods</span>
+                            <code>local + SAML</code>
+                        </div>
+                        <div class="status-row">
+                            <span class="text-body-secondary">Theme</span>
+                            <code>light / dark</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="pb-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-panel h-100 p-4">
+                    <h2 class="h5 mb-3">Local login</h2>
+                    <p class="mb-0 text-body-secondary">A seeded admin user lets you sign in immediately while the app is still on SQLite.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-panel h-100 p-4">
+                    <h2 class="h5 mb-3">Role model</h2>
+                    <p class="mb-0 text-body-secondary">Users can belong to multiple roles, starting with the default Admin and User roles.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-panel h-100 p-4">
+                    <h2 class="h5 mb-3">SAML path</h2>
+                    <p class="mb-0 text-body-secondary">An IdP can be layered in later by setting the SAML environment values and enabling the route.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

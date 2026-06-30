@@ -1,5 +1,8 @@
 from flask import Blueprint
 
-auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
+from .saml_routes import saml
 
-from app.auth import routes  # noqa: E402,F401
+auth = Blueprint("auth", __name__, url_prefix="/auth")
+auth.register_blueprint(saml)
+
+from . import routes
